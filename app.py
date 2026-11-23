@@ -1532,27 +1532,25 @@ async def api_live_matches():
             matches.append({
                 "id": match_id,
                 "title": (title or f"Cricket match {match_id}")[:180],
-                "url": f"https://www.cricbuzz.com/live-cricket-scores/{match_id}/",
             })
             seen.add(match_id)
 
         return {
             "status": "success",
-            "source": "Cricbuzz",
             "count": len(matches),
             "matches": matches[:30],
         }
     except httpx.TimeoutException:
         return JSONResponse(status_code=504, content={
-            "status": "error", "message": "The live-score source timed out. Please retry shortly."
+            "status": "error", "message": "Match data is temporarily unavailable. Please retry shortly."
         })
     except httpx.HTTPStatusError as exc:
         return JSONResponse(status_code=502, content={
-            "status": "error", "message": f"Cricbuzz returned HTTP {exc.response.status_code}."
+            "status": "error", "message": "The match data service is temporarily unavailable."
         })
     except httpx.RequestError:
         return JSONResponse(status_code=502, content={
-            "status": "error", "message": "Unable to connect to Cricbuzz."
+            "status": "error", "message": "Unable to retrieve match data right now."
         })
     except Exception:
         return JSONResponse(status_code=502, content={
@@ -1593,8 +1591,7 @@ async def api_full_match(match_id: str):
         if live_data is None and scorecard_data is None:
             return JSONResponse(status_code=502, content={
                 "status": "error",
-                "message": "Cricbuzz did not return match data. Check the match ID or retry shortly.",
-                "provider_errors": provider_errors,
+                "message": "Match data is unavailable for this ID. Check the ID and try again.",
             })
 
         header = (live_data or {}).get("matchHeader") or (scorecard_data or {}).get("matchHeader") or {}
@@ -1604,28 +1601,26 @@ async def api_full_match(match_id: str):
 
         return {
             "status": "success",
-            "source": "Cricbuzz",
             "match_id": match_id,
-            "match_url": f"https://www.cricbuzz.com/live-cricket-scores/{match_id}/",
             "match_header": header,
             "live_score": miniscore,
             "commentary": commentary,
             "scorecard": innings,
             "live_data": live_data,
             "scorecard_data": scorecard_data,
-            "provider_errors": provider_errors or None,
+            "data_status": "complete" if live_data is not None and scorecard_data is not None else "partial",
         }
     except httpx.TimeoutException:
         return JSONResponse(status_code=504, content={
-            "status": "error", "message": "Cricbuzz request timed out. Please retry."
+            "status": "error", "message": "Match data request timed out. Please retry."
         })
     except httpx.RequestError:
         return JSONResponse(status_code=502, content={
-            "status": "error", "message": "Unable to connect to Cricbuzz."
+            "status": "error", "message": "Unable to retrieve match data right now."
         })
     except Exception as exc:
         return JSONResponse(status_code=502, content={
-            "status": "error", "message": "Unable to parse Cricbuzz match data.", "detail": str(exc)
+            "status": "error", "message": "Unable to process match data. Please retry."
         })
 
 
