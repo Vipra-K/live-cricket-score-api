@@ -1606,8 +1606,6 @@ async def api_full_match(match_id: str):
             "live_score": miniscore,
             "commentary": commentary,
             "scorecard": innings,
-            "live_data": live_data,
-            "scorecard_data": scorecard_data,
             "data_status": "complete" if live_data is not None and scorecard_data is not None else "partial",
         }
     except httpx.TimeoutException:
