@@ -16,7 +16,7 @@
 <section class="toolbar" id="matches"><div class="tabs"><button class="tab active" data-filter="all">All matches</button><button class="tab" data-filter="live">Live</button></div><input id="search" placeholder="Search matches…" aria-label="Search matches"></section>
 <div class="heading"><h2>Match centre</h2><span class="muted" id="count">Loading matches</span></div>
 <section class="grid" id="grid"><div class="empty">Fetching live match listings…</div></section>
-<footer class="footer"><span>© <span id="year"></span> Boundary. Built for cricket fans.</span><span>Unofficial project · Match data sourced from <a href="https://www.cricbuzz.com/" target="_blank" rel="noreferrer">Cricbuzz</a>.</span></footer>
+<footer class="footer"><span>© <span id="year"></span> Boundary. Built for cricket fans.</span><span>Match data is aggregated and presented by Boundary.</span></footer>
 </main>
 <div class="modal" id="modal"><div class="dialog"><div class="dialoghead"><div><div class="eyebrow">Live scorecard</div><h3 id="modalTitle">Match details</h3></div><button class="close" id="close">✕</button></div><div id="modalBody"></div></div></div>
 <script>
@@ -35,7 +35,7 @@ async function loadMatches(){
  try{
   const r=await fetch('/api/matches',{cache:'no-store'}),d=await r.json();if(!r.ok||d.status!=='success')throw new Error(d.message||'Live feed unavailable');
   matches=d.matches||[];render();updated.textContent='Updated '+new Date().toLocaleTimeString();
-  if(!matches.length)grid.innerHTML='<div class="empty"><b>No current match links found</b>The score provider may have changed its page structure. Refresh shortly.</div>';
+  if(!matches.length)grid.innerHTML='<div class="empty"><b>No current match links found</b>Match information is temporarily unavailable. Please refresh shortly.</div>';
  }catch(e){grid.innerHTML='<div class="empty"><b>Live feed temporarily unavailable</b>'+esc(e.message)+'<br>Try again in a moment.</div>';count.textContent='Feed unavailable';updated.textContent='Connection issue'}
 }
 function renderData(label,value,depth){
@@ -55,7 +55,7 @@ function renderData(label,value,depth){
 async function showScore(id){
  const m=matches.find(function(x){return x.id===id}),modal=document.getElementById('modal'),body=document.getElementById('modalBody');
  document.getElementById('modalTitle').textContent=m?m.title:'Match '+id;
- modal.classList.add('open');body.innerHTML='<div class="empty">Loading complete match data from Cricbuzz…</div>';
+ modal.classList.add('open');body.innerHTML='<div class="empty">Loading match details…</div>';
  try{
   const r=await fetch('/api/match/'+encodeURIComponent(id),{cache:'no-store'}),d=await r.json();
   if(!r.ok||d.status!=='success')throw new Error(d.message||'Match data unavailable');
@@ -67,9 +67,7 @@ async function showScore(id){
   html+=renderData('Live score',live);
   html+=renderData('Full scorecard · '+innings.length+' innings',innings);
   html+=renderData('Commentary and match updates',commentary);
-  if(d.provider_errors)html+=renderData('Provider warnings',d.provider_errors);
-  html+='<details class="data-section"><summary>Complete provider response (raw JSON)</summary><div class="data-content">'+renderData('Live endpoint payload',d.live_data)+renderData('Scorecard endpoint payload',d.scorecard_data)+'</div></details>';
-  body.innerHTML=html||'<div class="empty">Cricbuzz returned no scorecard data for this match yet.</div>';
+  body.innerHTML=html||'<div class="empty">No match details are available yet.</div>';
  }catch(e){body.innerHTML='<div class="empty"><b>Unable to load match data</b>'+esc(e.message)+'</div>'}
 }
 document.querySelectorAll('.tab').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});b.classList.add('active');filter=b.dataset.filter;render()})});
