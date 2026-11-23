@@ -28,7 +28,7 @@ function render(){
  const visible=matches.filter(function(m){return (filter==='all'||/live|in progress/i.test(m.status||''))&&(m.title+' '+m.status).toLowerCase().includes(query)});
  count.textContent=visible.length+' match'+(visible.length===1?'':'es');
  if(!visible.length){grid.innerHTML='<div class="empty"><b>No matches found</b>Try another search or check back when matches are scheduled.</div>';return}
- grid.innerHTML=visible.map(function(m){return '<article class="card"><div class="cardtop"><span class="title">'+esc(m.title)+'</span><span class="pill">MATCH</span></div><div class="teams"><span class="team">🏏 Match centre</span><span class="vs">LIVE SCORE</span></div><div class="status">Open the scorecard for the latest available score and player details.</div><div class="foot"><button class="detail" data-id="'+esc(m.id)+'">View scorecard →</button><span class="muted">CRICBUZZ DATA</span></div></article>'}).join('');
+ grid.innerHTML=visible.map(function(m){return '<article class="card"><div class="cardtop"><span class="title">'+esc(m.title)+'</span><span class="pill">MATCH</span></div><div class="teams"><span class="team">🏏 Match centre</span><span class="vs">LIVE SCORE</span></div><div class="status">Open the scorecard for the latest available score and player details.</div><div class="foot"><button class="detail" data-id="'+esc(m.id)+'">View scorecard →</button><span class="muted">MATCH CENTRE</span></div></article>'}).join('');
  grid.querySelectorAll('.detail').forEach(function(b){b.addEventListener('click',function(){showScore(b.dataset.id)})});
 }
 async function loadMatches(){
