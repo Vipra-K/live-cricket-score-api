@@ -182,19 +182,20 @@ async def match_score(match_id: str):
 @app.api_route("/{path:path}", methods=["GET"], include_in_schema=False)
 async def route_fallback(path: str, request: Request):
     normalized = path.strip("/")
-    normalized = re.sub(r"^(?:api/)?(?:index\\.py/)?", "", normalized)
     normalized = normalized.rstrip("/")
+    while normalized.startswith("api/") or normalized.startswith("index.py/"):
+        normalized = normalized.split("/", 1)[1]
 
     if normalized == "health":
         return await health()
     if normalized == "matches":
         return await live_matches()
 
-    match_route = re.fullmatch(r"(?:api/)?match/(\\d{4,20})", normalized)
+    match_route = re.fullmatch(r"(?:api/)?match/(\d{4,20})", normalized)
     if match_route:
         return await full_match(match_route.group(1))
 
-    score_route = re.fullmatch(r"(?:api/)?score/(\\d{4,20})", normalized)
+    score_route = re.fullmatch(r"(?:api/)?score/(\d{4,20})", normalized)
     if score_route:
         return await match_score(score_route.group(1))
 
