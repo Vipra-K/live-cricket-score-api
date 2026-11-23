@@ -42,7 +42,7 @@ async function showScore(id){
  const m=matches.find(function(x){return x.id===id}),modal=document.getElementById('modal'),body=document.getElementById('modalBody');
  document.getElementById('modalTitle').textContent=m?m.title:'Match details';modal.classList.add('open');body.innerHTML='<div class="empty">Loading scorecard…</div>';
  try{
-  const r=await fetch('/api/?score='+encodeURIComponent(id),{cache:'no-store'}),d=await r.json();if(!r.ok||d.status!=='success')throw new Error(d.message||'Score unavailable');
+  const r=await fetch('/api/score/'+encodeURIComponent(id),{cache:'no-store'}),d=await r.json();if(!r.ok||d.status!=='success')throw new Error(d.message||'Score unavailable');
   const rows=[['Match status',d.match_status],['Score',d.score],['Run rate',d.run_rate],['Batter 1',(d.current_batsmen[0].name+' · '+d.current_batsmen[0].score)],['Batter 2',(d.current_batsmen[1].name+' · '+d.current_batsmen[1].score)],['Bowler',d.current_bowler.name],['Bowler figures',[d.current_bowler.over,d.current_bowler.runs+' runs',d.current_bowler.wicket+' wickets'].join(' · ')]];
   body.innerHTML=rows.map(function(row){return '<div class="detailrow"><span>'+esc(row[0])+'</span><strong>'+esc(row[1])+'</strong></div>'}).join('');
  }catch(e){body.innerHTML='<div class="empty">'+esc(e.message)+'</div>'}
