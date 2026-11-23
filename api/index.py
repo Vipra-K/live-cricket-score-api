@@ -2,6 +2,7 @@ import asyncio
 import re
 
 import httpx
+from fastapi import Request
 from bs4 import BeautifulSoup
 from fastapi.responses import JSONResponse
 
@@ -38,7 +39,7 @@ async def live_matches():
 
         for anchor in soup.select('a[href*="/live-cricket-scores/"]'):
             href = anchor.get("href", "")
-            found = re.search(r"/live-cricket-scores/(\\d+)(?:/|$)", href)
+            found = re.search(r"/live-cricket-scores/(\d+)(?:/|$)", href)
             if not found:
                 continue
 
@@ -104,7 +105,7 @@ async def fetch_cricbuzz_json(client: httpx.AsyncClient, endpoint: str):
 
 @app.get("/api/match/{match_id}")
 async def full_match(match_id: str):
-    if not re.fullmatch(r"\\d{4,20}", match_id):
+    if not re.fullmatch(r"\d{4,20}", match_id):
         raise APIError(422, "invalid match id")
 
     try:
@@ -172,7 +173,37 @@ async def full_match(match_id: str):
 
 @app.get("/api/score/{match_id}")
 async def match_score(match_id: str):
-    if not re.fullmatch(r"\\d{4,20}", match_id):
+    if not re.fullmatch(r"\d{4,20}", match_id):
         raise APIError(422, "invalid score id")
 
     return await ScoreService.fetch_score(match_id)
+
+
+@app.api_route("/{path:path}", methods=["GET"], include_in_schema=False)
+async def route_fallback(path: str, request: Request):
+    normalized = path.strip("/")
+    normalized = re.sub(r"^(?:api/)?(?:index\\.py/)?", "", normalized)
+    normalized = normalized.rstrip("/")
+
+    if normalized == "health":
+        return await health()
+    if normalized == "matches":
+        return await live_matches()
+
+    match_route = re.fullmatch(r"(?:api/)?match/(\\d{4,20})", normalized)
+    if match_route:
+        return await full_match(match_route.group(1))
+
+    score_route = re.fullmatch(r"(?:api/)?score/(\\d{4,20})", normalized)
+    if score_route:
+        return await match_score(score_route.group(1))
+
+    return JSONResponse(
+        status_code=404,
+        content={
+            "status": "error",
+            "code": 404,
+            "message": "Unknown API route",
+            "requested_path": request.url.path,
+        },
+    )
