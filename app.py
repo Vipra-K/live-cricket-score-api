@@ -12,6 +12,7 @@ from fastapi.responses import (
     JSONResponse,
     PlainTextResponse,
     HTMLResponse,
+    FileResponse,
 )
 from pydantic import BaseModel, ValidationError, field_validator
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -1448,49 +1449,9 @@ async def custom_swagger_docs():
         )
 
 
-@app.get("/", response_model=ScoreResponse)
-async def root(
-    score: Optional[str] = Query(
-        None,
-        min_length=4,
-        max_length=20,
-    ),
-    text: bool = Query(False),
-):
-    if score is None:
-        return ScoreResponse(
-            status="success",
-            title="Live Score API",
-            match_status=NOT_FOUND,
-            score=NOT_FOUND,
-            run_rate=NOT_FOUND,
-            current_batsmen=ScoreService.default_batsmen(),
-            current_bowler=Bowler(),
-        )
-
-    try:
-        validated = MatchValidator(score=score)
-    except ValidationError as exc:
-        err_msg = exc.errors()[0].get("msg", INVALID_MATCH_ID)
-        err_msg = err_msg.removeprefix("Value error, ")
-        return JSONResponse(
-            status_code=422,
-            content={
-                "status": "error",
-                "code": 422,
-                "message": err_msg,
-            },
-        )
-
-    result = await ScoreService.fetch_score(validated.score)
-
-    if text:
-        return PlainTextResponse(
-            ScoreService.format_tree(result)
-        )
-
-    return result
-
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    return FileResponse("index.html", media_type="text/html")
 
 @app.exception_handler(APIError)
 async def api_error_handler(request: Request, exc: APIError):
